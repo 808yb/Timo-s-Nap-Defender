@@ -11,6 +11,7 @@ export function useAudio({ src, volume = 0.5, loop = true, autoplay = false }: U
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
+  const [isAudioEnabled, setIsAudioEnabled] = useState(false);
 
   useEffect(() => {
     // Create audio element
@@ -18,13 +19,14 @@ export function useAudio({ src, volume = 0.5, loop = true, autoplay = false }: U
     audio.volume = volume;
     audio.loop = loop;
     audio.preload = 'auto';
+    
+    // iOS Safari requires user interaction to enable audio
+    // Set muted initially to allow loading
+    audio.muted = true;
 
     // Event listeners
     const handleCanPlayThrough = () => {
       setIsLoaded(true);
-      if (autoplay) {
-        audio.play().catch(console.error);
-      }
     };
 
     const handlePlay = () => setIsPlaying(true);
@@ -48,12 +50,31 @@ export function useAudio({ src, volume = 0.5, loop = true, autoplay = false }: U
     };
   }, [src, volume, loop, autoplay]);
 
+  // Enable audio on first user interaction
+  const enableAudio = () => {
+    if (audioRef.current && !isAudioEnabled) {
+      audioRef.current.muted = false;
+      setIsAudioEnabled(true);
+    }
+  };
+
   const play = async () => {
     if (audioRef.current && isLoaded) {
       try {
+        // Enable audio if not already enabled
+        enableAudio();
         await audioRef.current.play();
       } catch (error) {
         console.error('Failed to play audio:', error);
+        // If play fails, try to enable audio and retry
+        if (!isAudioEnabled) {
+          enableAudio();
+          try {
+            await audioRef.current.play();
+          } catch (retryError) {
+            console.error('Failed to play audio after retry:', retryError);
+          }
+        }
       }
     }
   };
@@ -84,5 +105,7 @@ export function useAudio({ src, volume = 0.5, loop = true, autoplay = false }: U
     setVolume,
     isPlaying,
     isLoaded,
+    isAudioEnabled,
+    enableAudio,
   };
 } 

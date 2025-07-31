@@ -11,6 +11,7 @@ import { useFlyBuzz } from '../hooks/useFlyBuzz';
 import { useVacuumSound } from '../hooks/useVacuumSound';
 import { useUfoSound } from '../hooks/useUfoSound';
 import { usePurrSound } from '../hooks/usePurrSound';
+import { useAudioContext } from '../hooks/useAudioContext';
 
 interface GameState {
   isPlaying: boolean;
@@ -41,7 +42,7 @@ export default function Game() {
   const [annoyances, setAnnoyances] = useState<Annoyance[]>([]);
 
   // Background music hook
-  const { play: playMusic, pause: pauseMusic } = useAudio({
+  const { play: playMusic, pause: pauseMusic, enableAudio: enableMusic } = useAudio({
     src: '/sounds/background.wav',
     volume: 0.3,
     loop: true,
@@ -49,16 +50,22 @@ export default function Game() {
   });
 
   // Fly buzzing sound hook
-  const { play: playFlyBuzz, stop: stopFlyBuzz } = useFlyBuzz();
+  const { play: playFlyBuzz, stop: stopFlyBuzz, enableAudio: enableFlyBuzz } = useFlyBuzz();
 
   // Vacuum sound hook
-  const { play: playVacuumSound } = useVacuumSound();
+  const { play: playVacuumSound, enableAudio: enableVacuum } = useVacuumSound();
 
   // UFO sound hook
-  const { play: playUfoSound, stop: stopUfoSound } = useUfoSound();
+  const { play: playUfoSound, stop: stopUfoSound, enableAudio: enableUfo } = useUfoSound();
 
   // Purring sound hook
-  const { playPurrForDuration } = usePurrSound();
+  const { playPurrForDuration, enableAudio: enablePurr } = usePurrSound();
+
+  // Audio context for iOS compatibility
+  const { initializeAudioContext, resumeAudioContext } = useAudioContext();
+  
+  // Audio status state
+  const [audioEnabled, setAudioEnabled] = useState(false);
 
 
 
@@ -79,6 +86,18 @@ export default function Game() {
   }, []);
 
   const startGame = () => {
+    // Initialize audio context and enable all audio on first user interaction (iOS requirement)
+    initializeAudioContext();
+    resumeAudioContext();
+    enableMusic();
+    enableFlyBuzz();
+    enableVacuum();
+    enableUfo();
+    enablePurr();
+    
+    // Mark audio as enabled
+    setAudioEnabled(true);
+    
     setGameState({
       isPlaying: true,
       isPaused: false,
@@ -91,7 +110,9 @@ export default function Game() {
       isPortrait: gameState.isPortrait, // Keep current orientation
     });
     setAnnoyances([]); // Clear any existing enemies
-    playMusic(); // Start background music
+    if (audioEnabled) {
+      playMusic(); // Start background music only if audio is enabled
+    }
   };
 
   const togglePause = () => {
@@ -109,10 +130,10 @@ export default function Game() {
         const hasFlies = annoyances.some(annoyance => annoyance.type === 'fly');
         const hasUfos = annoyances.some(annoyance => annoyance.type === 'ufo');
 
-        if (hasFlies) {
+        if (hasFlies && audioEnabled) {
           playFlyBuzz();
         }
-        if (hasUfos) {
+        if (hasUfos && audioEnabled) {
           playUfoSound();
         }
       }
@@ -153,7 +174,7 @@ export default function Game() {
           }));
           
           // Play vacuum sound if a vacuum was defeated
-          if (a.type === 'roomba') {
+          if (a.type === 'roomba' && audioEnabled) {
             playVacuumSound();
           }
           
@@ -404,13 +425,13 @@ export default function Game() {
         const hasFlies = updatedAnnoyances.some(annoyance => annoyance.type === 'fly');
         const hasUfos = updatedAnnoyances.some(annoyance => annoyance.type === 'ufo');
 
-        if (hasFlies) {
+        if (hasFlies && audioEnabled) {
           playFlyBuzz();
         } else {
           stopFlyBuzz();
         }
 
-        if (hasUfos) {
+        if (hasUfos && audioEnabled) {
           playUfoSound();
         } else {
           stopUfoSound();
@@ -467,6 +488,7 @@ export default function Game() {
                 }}
               />
             </motion.div>
+            
           </div>
         ) : (
           <div
@@ -507,7 +529,11 @@ export default function Game() {
               }`}
               onClick={() => {
                 if (gameState.isPlaying && !gameState.isPaused) {
-                  playPurrForDuration(2000); // Play purr for 2 seconds
+                  // Enable audio on user interaction (iOS requirement)
+                  enablePurr();
+                  if (audioEnabled) {
+                    playPurrForDuration(2000); // Play purr for 2 seconds
+                  }
                 }
               }}
               style={{ cursor: 'pointer' }}
@@ -572,6 +598,33 @@ export default function Game() {
                 {gameState.enemiesRemaining <= 0 && (
                   <div className="game-stats">Next {gameState.nextWaveIn}s</div>
                 )}
+                {/* Audio Status Indicator */}
+                <motion.div 
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.9 }}
+                  onClick={() => {
+                    if (!audioEnabled) {
+                      // Enable audio
+                      initializeAudioContext();
+                      resumeAudioContext();
+                      enableMusic();
+                      enableFlyBuzz();
+                      enableVacuum();
+                      enableUfo();
+                      enablePurr();
+                      setAudioEnabled(true);
+                    } else {
+                      // Disable audio
+                      pauseMusic();
+                      stopFlyBuzz();
+                      stopUfoSound();
+                      setAudioEnabled(false);
+                    }
+                  }}
+                  className={`game-stats text-xs cursor-pointer ${audioEnabled ? 'text-green-400' : 'text-red-400'}`}
+                >
+                  🔊 {audioEnabled ? 'ON' : 'OFF'}
+                </motion.div>
               </div>
             </div>
 

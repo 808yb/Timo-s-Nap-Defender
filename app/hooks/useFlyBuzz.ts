@@ -4,6 +4,7 @@ export function useFlyBuzz() {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
+  const [isAudioEnabled, setIsAudioEnabled] = useState(false);
 
   useEffect(() => {
     // Create audio element
@@ -11,6 +12,10 @@ export function useFlyBuzz() {
     audio.volume = 0.4;
     audio.loop = true;
     audio.preload = 'auto';
+    
+    // iOS Safari requires user interaction to enable audio
+    // Set muted initially to allow loading
+    audio.muted = true;
 
     // Event listeners
     const handleCanPlayThrough = () => {
@@ -35,12 +40,31 @@ export function useFlyBuzz() {
     };
   }, []);
 
+  // Enable audio on first user interaction
+  const enableAudio = () => {
+    if (audioRef.current && !isAudioEnabled) {
+      audioRef.current.muted = false;
+      setIsAudioEnabled(true);
+    }
+  };
+
   const play = async () => {
     if (audioRef.current && isLoaded && !isPlaying) {
       try {
+        // Enable audio if not already enabled
+        enableAudio();
         await audioRef.current.play();
       } catch (error) {
         console.error('Failed to play fly buzz:', error);
+        // If play fails, try to enable audio and retry
+        if (!isAudioEnabled) {
+          enableAudio();
+          try {
+            await audioRef.current.play();
+          } catch (retryError) {
+            console.error('Failed to play fly buzz after retry:', retryError);
+          }
+        }
       }
     }
   };
@@ -57,5 +81,7 @@ export function useFlyBuzz() {
     stop,
     isPlaying,
     isLoaded,
+    isAudioEnabled,
+    enableAudio,
   };
 } 

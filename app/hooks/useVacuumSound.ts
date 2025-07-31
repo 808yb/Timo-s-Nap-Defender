@@ -4,6 +4,7 @@ export function useVacuumSound() {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
+  const [isAudioEnabled, setIsAudioEnabled] = useState(false);
 
   useEffect(() => {
     // Create audio element
@@ -11,6 +12,10 @@ export function useVacuumSound() {
     audio.volume = 0.4;
     audio.loop = false; // Don't loop - play once when vacuum dies
     audio.preload = 'auto';
+    
+    // iOS Safari requires user interaction to enable audio
+    // Set muted initially to allow loading
+    audio.muted = true;
 
     // Event listeners
     const handleCanPlayThrough = () => {
@@ -35,14 +40,34 @@ export function useVacuumSound() {
     };
   }, []);
 
+  // Enable audio on first user interaction
+  const enableAudio = () => {
+    if (audioRef.current && !isAudioEnabled) {
+      audioRef.current.muted = false;
+      setIsAudioEnabled(true);
+    }
+  };
+
   const play = async () => {
     if (audioRef.current && isLoaded) {
       try {
+        // Enable audio if not already enabled
+        enableAudio();
         // Always reset and play, even if currently playing
         audioRef.current.currentTime = 0; // Reset to beginning
         await audioRef.current.play();
       } catch (error) {
         console.error('Failed to play vacuum sound:', error);
+        // If play fails, try to enable audio and retry
+        if (!isAudioEnabled) {
+          enableAudio();
+          try {
+            audioRef.current.currentTime = 0;
+            await audioRef.current.play();
+          } catch (retryError) {
+            console.error('Failed to play vacuum sound after retry:', retryError);
+          }
+        }
       }
     }
   };
@@ -59,5 +84,7 @@ export function useVacuumSound() {
     stop,
     isPlaying,
     isLoaded,
+    isAudioEnabled,
+    enableAudio,
   };
 } 

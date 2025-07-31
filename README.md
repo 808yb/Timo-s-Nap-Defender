@@ -1,4 +1,19 @@
+# Timo's Nap Game
+
+A fun web game where you help Timo sleep peacefully by defending against annoying enemies!
+
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+
+## iOS Audio Support
+
+The game includes special handling for iOS Safari's strict audio policies:
+
+- Audio is initially muted and enabled on first user interaction
+- Visual audio status indicator shows when audio is enabled
+- Manual audio enable button available if needed
+- Web Audio API context initialization for better compatibility
+
+If audio doesn't work on iOS, tap the 🔊 icon in the game UI to manually enable it.
 
 ## Getting Started
 
