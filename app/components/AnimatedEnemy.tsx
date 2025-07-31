@@ -1,6 +1,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
+import Image from 'next/image';
 import SpriteAnimation from './SpriteAnimation';
 import { AnnoyanceType } from '../game/annoyanceTypes';
 
@@ -93,9 +94,11 @@ export default function AnimatedEnemy({
         />
         {/* Heart HP Indicator */}
         <div className="absolute top-0 right-0 w-2 h-2 flex items-center justify-center">
-          <img 
+          <Image 
             src="/sprites/heart.png" 
             alt="HP" 
+            width={20}
+            height={20}
             className="w-50 h-50 pixel-art"
             style={{
               imageRendering: 'pixelated'

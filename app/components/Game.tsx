@@ -34,14 +34,14 @@ export default function Game() {
     nextWaveIn: 5,
     waveNumber: 0,
     enemiesRemaining: 0,
-    isPortrait: window.innerHeight > window.innerWidth, // Auto-detect initial orientation
+    isPortrait: false, // Default to false, will be set in useEffect
   });
   
   const gameAreaRef = useRef<HTMLDivElement>(null);
   const [annoyances, setAnnoyances] = useState<Annoyance[]>([]);
 
   // Background music hook
-  const { play: playMusic, pause: pauseMusic, isPlaying: isMusicPlaying } = useAudio({
+  const { play: playMusic, pause: pauseMusic } = useAudio({
     src: '/sounds/background.wav',
     volume: 0.3,
     loop: true,
@@ -52,13 +52,15 @@ export default function Game() {
   const { play: playFlyBuzz, stop: stopFlyBuzz } = useFlyBuzz();
 
   // Vacuum sound hook
-  const { play: playVacuumSound, stop: stopVacuumSound } = useVacuumSound();
+  const { play: playVacuumSound } = useVacuumSound();
 
   // UFO sound hook
   const { play: playUfoSound, stop: stopUfoSound } = useUfoSound();
 
   // Purring sound hook
   const { playPurrForDuration } = usePurrSound();
+
+
 
   // Auto-detect orientation changes
   useEffect(() => {
@@ -68,6 +70,9 @@ export default function Game() {
         isPortrait: window.innerHeight > window.innerWidth
       }));
     };
+
+    // Set initial orientation
+    handleResize();
 
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
@@ -347,7 +352,7 @@ export default function Game() {
           const distance = Math.sqrt(dx * dx + dy * dy);
           
           // Adjust hitbox based on Timo's scale
-          const timoHitbox = window.innerWidth > window.innerHeight ? 45 : 35; // Larger hitbox in landscape mode
+          const timoHitbox = gameState.isPortrait ? 35 : 45; // Larger hitbox in landscape mode
           if (distance < timoHitbox) { // Hit Timo
             const newHealth = Math.max(0, gameState.sleepHealth - 1);
             setGameState(prev => ({
@@ -371,8 +376,8 @@ export default function Game() {
           const newY = annoyance.position.y + (dy / distance) * speed;
 
           // Get game area dimensions
-          const gameWidth = gameAreaRef.current?.clientWidth ?? window.innerWidth;
-          const gameHeight = gameAreaRef.current?.clientHeight ?? window.innerHeight;
+          const gameWidth = gameAreaRef.current?.clientWidth ?? 800; // Fallback width
+          const gameHeight = gameAreaRef.current?.clientHeight ?? 600; // Fallback height
 
           // Ensure position stays within bounds
           const boundedX = Math.max(0, Math.min(gameWidth - ANNOYANCE_CONFIG[annoyance.type].size, newX));
@@ -530,8 +535,8 @@ export default function Game() {
                   dragConstraints={{
                     left: 0,
                     top: 0,
-                    right: gameAreaRef.current?.clientWidth ?? window.innerWidth,
-                    bottom: gameAreaRef.current?.clientHeight ?? window.innerHeight
+                    right: gameAreaRef.current?.clientWidth ?? 800,
+                    bottom: gameAreaRef.current?.clientHeight ?? 600
                   }}
                   onDragStart={() => setAnnoyances(prev => 
                     prev.map(a => a.id === annoyance.id ? { ...a, isDragging: true } : a)
