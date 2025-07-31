@@ -1,26 +1,37 @@
-@import "tailwindcss";
+@import "tailwindcss/preflight";
+@tailwind utilities;
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+.pixel-art {
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+.game-container {
+  background-image: url('/sprites/mobile background.jpg');
+  background-size: cover;
+  background-position: center;
+  width: 100%;
+  height: 100vh;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+/* When width is greater than height, use the landscape background */
+@media (min-aspect-ratio: 1/1) {
+  .game-container {
+    background-image: url('/sprites/Background.jpg');
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+.game-stats {
+  background-color: #d9a066;
+  border: 3px solid #8e4819;
+  padding: 8px 16px;
+  border-radius: 4px;
+  color: white;
+  font-family: var(--font-press-start-2p), monospace;
+  text-shadow: 2px 2px #000;
+  image-rendering: pixelated;
+  font-size: 0.875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  white-space: nowrap;
 }
