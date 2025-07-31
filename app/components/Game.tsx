@@ -34,14 +34,14 @@ export default function Game() {
     nextWaveIn: 5,
     waveNumber: 0,
     enemiesRemaining: 0,
-    isPortrait: false, // Default to landscape, will be updated in useEffect
+    isPortrait: window.innerHeight > window.innerWidth, // Auto-detect initial orientation
   });
   
   const gameAreaRef = useRef<HTMLDivElement>(null);
   const [annoyances, setAnnoyances] = useState<Annoyance[]>([]);
 
   // Background music hook
-  const { play: playMusic, pause: pauseMusic } = useAudio({
+  const { play: playMusic, pause: pauseMusic, isPlaying: isMusicPlaying } = useAudio({
     src: '/sounds/background.wav',
     volume: 0.3,
     loop: true,
@@ -52,7 +52,7 @@ export default function Game() {
   const { play: playFlyBuzz, stop: stopFlyBuzz } = useFlyBuzz();
 
   // Vacuum sound hook
-  const { play: playVacuumSound } = useVacuumSound();
+  const { play: playVacuumSound, stop: stopVacuumSound } = useVacuumSound();
 
   // UFO sound hook
   const { play: playUfoSound, stop: stopUfoSound } = useUfoSound();
@@ -68,9 +68,6 @@ export default function Game() {
         isPortrait: window.innerHeight > window.innerWidth
       }));
     };
-
-    // Set initial orientation
-    handleResize();
 
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
@@ -428,7 +425,7 @@ export default function Game() {
       clearInterval(countdownInterval);
       clearInterval(gameLoop);
     };
-  }, [gameState.isPlaying, gameState.isPaused, gameState.enemiesRemaining, gameState.gameSpeed, gameState.sleepHealth, gameState.isPortrait, pauseMusic, playFlyBuzz, playUfoSound, stopFlyBuzz, stopUfoSound]);
+  }, [gameState.isPlaying, gameState.isPaused, gameState.enemiesRemaining, gameState.gameSpeed, gameState.sleepHealth]);
 
   return (
     <div className="game-container relative">
