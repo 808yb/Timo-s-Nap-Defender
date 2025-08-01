@@ -38,9 +38,11 @@ export function usePurrSound() {
       audio.removeEventListener('ended', handleEnded);
       audio.pause();
       audioRef.current = null;
+      // Store the interval reference in a variable to avoid stale closure
       const currentInterval = intervalRef.current;
       if (currentInterval) {
         clearInterval(currentInterval);
+        intervalRef.current = null;
       }
     };
   }, []);

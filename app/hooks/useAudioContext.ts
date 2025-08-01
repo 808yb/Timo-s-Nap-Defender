@@ -10,7 +10,7 @@ export function useAudioContext() {
     try {
       // Create AudioContext if not exists
       if (!audioContextRef.current) {
-        audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
+        audioContextRef.current = new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
       }
 
       // Resume context if suspended (iOS requirement)

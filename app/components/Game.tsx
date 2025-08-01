@@ -466,7 +466,7 @@ export default function Game() {
       clearInterval(countdownInterval);
       clearInterval(gameLoop);
     };
-  }, [gameState.isPlaying, gameState.isPaused, gameState.enemiesRemaining, gameState.gameSpeed, gameState.sleepHealth]);
+  }, [gameState.isPlaying, gameState.isPaused, gameState.enemiesRemaining, gameState.gameSpeed, gameState.sleepHealth, gameState.isPortrait, audioEnabled]);
 
   return (
     <div className="game-container relative">
