@@ -43,7 +43,7 @@ export default function Game() {
 
   // Background music hook
   const { play: playMusic, pause: pauseMusic, enableAudio: enableMusic } = useAudio({
-    src: '/sounds/background.wav',
+    src: '/sounds/background.mp3',
     volume: 0.3,
     loop: true,
     autoplay: false
@@ -66,6 +66,7 @@ export default function Game() {
   
   // Audio status state
   const [audioEnabled, setAudioEnabled] = useState(false);
+  const [musicEnabled, setMusicEnabled] = useState(true);
 
 
 
@@ -110,8 +111,8 @@ export default function Game() {
       isPortrait: gameState.isPortrait, // Keep current orientation
     });
     setAnnoyances([]); // Clear any existing enemies
-    if (audioEnabled) {
-      playMusic(); // Start background music only if audio is enabled
+    if (audioEnabled && musicEnabled) {
+      playMusic(); // Start background music only if audio and music are enabled
     }
   };
 
@@ -125,7 +126,9 @@ export default function Game() {
         stopFlyBuzz(); // Stop fly buzzing when paused
         stopUfoSound(); // Stop UFO sound when paused
       } else {
-        playMusic();
+        if (audioEnabled && musicEnabled) {
+          playMusic();
+        }
         // Resume enemy sounds if enemies are present
         const hasFlies = annoyances.some(annoyance => annoyance.type === 'fly');
         const hasUfos = annoyances.some(annoyance => annoyance.type === 'ufo');
@@ -156,6 +159,18 @@ export default function Game() {
     pauseMusic(); // Stop background music
     stopFlyBuzz(); // Stop fly buzzing
     stopUfoSound(); // Stop UFO sound
+  };
+
+  const toggleMusic = () => {
+    setMusicEnabled(prev => {
+      const newMusicEnabled = !prev;
+      if (newMusicEnabled && audioEnabled && gameState.isPlaying && !gameState.isPaused) {
+        playMusic();
+      } else if (!newMusicEnabled) {
+        pauseMusic();
+      }
+      return newMusicEnabled;
+    });
   };
 
   const handleClick = (annoyanceId: string) => {
@@ -598,33 +613,7 @@ export default function Game() {
                 {gameState.enemiesRemaining <= 0 && (
                   <div className="game-stats">Next {gameState.nextWaveIn}s</div>
                 )}
-                {/* Audio Status Indicator */}
-                <motion.div 
-                  whileHover={{ scale: 1.1 }}
-                  whileTap={{ scale: 0.9 }}
-                  onClick={() => {
-                    if (!audioEnabled) {
-                      // Enable audio
-                      initializeAudioContext();
-                      resumeAudioContext();
-                      enableMusic();
-                      enableFlyBuzz();
-                      enableVacuum();
-                      enableUfo();
-                      enablePurr();
-                      setAudioEnabled(true);
-                    } else {
-                      // Disable audio
-                      pauseMusic();
-                      stopFlyBuzz();
-                      stopUfoSound();
-                      setAudioEnabled(false);
-                    }
-                  }}
-                  className={`game-stats text-xs cursor-pointer ${audioEnabled ? 'text-green-400' : 'text-red-400'}`}
-                >
-                  🔊 {audioEnabled ? 'ON' : 'OFF'}
-                </motion.div>
+
               </div>
             </div>
 
@@ -654,6 +643,40 @@ export default function Game() {
                       className="game-stats cursor-pointer hover:brightness-110"
                     >
                       RESTART
+                    </motion.button>
+                    <motion.button
+                      whileHover={{ scale: 1.1 }}
+                      whileTap={{ scale: 0.9 }}
+                      onClick={() => {
+                        if (!audioEnabled) {
+                          // Enable audio
+                          initializeAudioContext();
+                          resumeAudioContext();
+                          enableMusic();
+                          enableFlyBuzz();
+                          enableVacuum();
+                          enableUfo();
+                          enablePurr();
+                          setAudioEnabled(true);
+                        } else {
+                          // Disable audio
+                          pauseMusic();
+                          stopFlyBuzz();
+                          stopUfoSound();
+                          setAudioEnabled(false);
+                        }
+                      }}
+                      className={`game-stats cursor-pointer hover:brightness-110 ${audioEnabled ? 'text-green-400' : 'text-red-400'}`}
+                    >
+                      🔊 SOUND {audioEnabled ? 'ON' : 'OFF'}
+                    </motion.button>
+                    <motion.button
+                      whileHover={{ scale: 1.1 }}
+                      whileTap={{ scale: 0.9 }}
+                      onClick={toggleMusic}
+                      className={`game-stats cursor-pointer hover:brightness-110 ${musicEnabled ? 'text-green-400' : 'text-red-400'}`}
+                    >
+                      🎵 MUSIC {musicEnabled ? 'ON' : 'OFF'}
                     </motion.button>
                   </div>
                 </motion.div>
